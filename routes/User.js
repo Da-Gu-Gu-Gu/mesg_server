@@ -11,10 +11,13 @@ router.post('/',async(req,res)=>{
     try{
         console.log(req.body)
         let emailCheck=await User.findOne({email:req.body.email})
-        if(emailCheck) return res.status(200).json("Email already exist")
+        if(emailCheck) return res.status(200).json({message:"Email already exist"})
         bcrypt.hash(req.body.password,10)
         .then(async(hashedPassword)=>{
-            let user=new User(req.body)
+            req.body.password=hashedPassword
+            let user=new User(
+                req.body,
+                )
             await user.save()
 
             if(!user.isGoogle){
