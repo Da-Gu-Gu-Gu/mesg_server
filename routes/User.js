@@ -5,6 +5,8 @@ const bcrypt=require('bcryptjs')
 const AccessToken=require('../models/AccessToken')
 const jwt=require('jsonwebtoken')
 const auth=require('../middleware/Auth')
+const mongoose=require('mongoose')
+const sendEmail=require('../utils/email')
 
 //sign up
 router.post('/',async(req,res)=>{
@@ -26,8 +28,16 @@ router.post('/',async(req,res)=>{
                 token:`hiqeounn;aduo[${Math.random()*1000}${user._id}dfaf2io`
             })
             await token.save()
-        }
+
+            const message=`${process.env.CLIENT_URL}/verify/${user._id}/${token.token}`
+
+            await sendEmail(user.email,"Please Verify your account",message)
+
             res.status(200).json({message:"Account Created Successfully, Please verify your account"})
+        }else{
+            res.status(200).json({message:"Account created Successfully"})
+        }
+  
         })
     }
     catch(err){
@@ -71,8 +81,14 @@ router.get('/',auth,async(req,res)=>{
 //verfiy
 router.put('/verify/:id/:token',async(req,res)=>{
     try{
-        let userCheck=await User.findById(req.params.id)
+        if( !mongoose.Types.ObjectId.isValid(req.params.id) ){
+            return res.status(200).json({message:"Invalid User"})
+        }
+       await User.findById(req.params.id)
+       .then(userCheck=>{
         if(!userCheck) return res.status(200).json({message:"Invalid User"})
+       })
+
 
         let tokenCheck=await AccessToken.findOne({token:req.params.token})
         if(!tokenCheck) return res.status(200).json({message:"Invalid Token"})
@@ -84,7 +100,7 @@ router.put('/verify/:id/:token',async(req,res)=>{
         })
         await AccessToken.findByIdAndDelete(tokenCheck._id)
 
-        res.status(200).json("Account Verified Successfully")
+        res.status(200).json({message:"Account Verified Successfully"})
     }
     catch(err){
         console.log(err)
@@ -96,18 +112,17 @@ router.put('/verify/:id/:token',async(req,res)=>{
 router.post('/forgotpassword',async(req,res)=>{
     try{
         let emailCheck=await User.findOne({email:req.body.email})
-        if(!emailCheck || !emailCheck.isGoogle) return res.status(200).json({message:"Invalid Email"})
+        if(!emailCheck || emailCheck.isGoogle) return res.status(200).json({message:"Invalid Email"})
 
         let token=new AccessToken({
             email:emailCheck.email,
             token:`fadsf13v90${Math.random()*1000}${emailCheck._id}f2hgnvk`
         })
         token.save()
-        .then(()=>{
-            //domain
-            // const message=`http://localhost:3001/resetpassword/${emailCheck._id}/${token.token}`
-            //  sendEmail(emailCheck.email,"Password Reset",message)
-            res.status(200).json({msg:"Email sent your account"})
+        .then(async()=>{
+            const message=`${process.env.CLIENT_URL}/resetpassword/${emailCheck._id}/${token.token}`
+            await sendEmail(emailCheck.email,"Password Reset ",message)
+            res.status(200).json({message:"Email sent your account"})
         })
         
 
@@ -120,24 +135,35 @@ router.post('/forgotpassword',async(req,res)=>{
 //resetpassword
 router.put('/resetpassword/:id/:token',async(req,res)=>{
     try{
+        console.log(req.body)
+        if( !mongoose.Types.ObjectId.isValid(req.params.id) ){
+            return res.status(200).json({err:"Invalid User"})
+        }
+
         let userCheck=await User.findById(req.params.id)
-        if(!userCheck) return res.status(200).json("Invalid User")
+        if(!userCheck || userCheck.isGoogle) return res.status(200).json({err:"Invalid User"})
 
         let tokenCheck=await AccessToken.findOne({token:req.params.token})
-        if(!tokenCheck) return res.status(200).json("Invalid Token")
+        if(!tokenCheck) return res.status(200).json({err:"Invalid Token"})
 
         const {password,confirmpassword}=req.body
 
-        if(password!==confirmpassword) return res.status(200).json("Password Doesn't match")
-     
-        let passwordUpdate=await User.findByIdAndUpdate(req.params.id,{
-            password:await bcrypt.hashSync(password,10)
+        if(password!==confirmpassword) {
+        return res.status(200).json({message:"Password Doesn't match"})
+        }else{
+            console.log(bcrypt.hashSync(password,10))
+        // bcrypt.hash(password,10)
+        // .then(async(hashedPassword)=>{
+            await User.findByIdAndUpdate(req.params.id,{
+            password:bcrypt.hashSync(password,10)
         },{
             new:true
         })
+    // })
 
         await AccessToken.findByIdAndDelete(tokenCheck._id)
-        res.status(200).json({msg:"Password Reset Successfully"})
+        res.status(200).json({message:"Password Reset Successfully"})
+}
     }
     catch(err){
         console.log(err)
