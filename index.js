@@ -15,6 +15,12 @@ app.use(express.json())
 const userRoute=require('./routes/User')
 app.use('/api/user/',userRoute)
 
+const conversationRoute=require('./routes/Conversation')
+app.use('/api/conversation/',conversationRoute)
+
+const roomRoute=require('./routes/Room')
+app.use('/api/room/',roomRoute)
+
 const httpServer = createServer(app);
 
 mongoose.connect(process.env.MONGODB)
