@@ -57,7 +57,7 @@ router.post('/signin',async(req,res)=>{
             if(!savedUser.isVerify)return res.status(201).json({message:"Plz verify your account first"})
                 if(bcrypt.compareSync(req.body.password,savedUser.password)){
                     const token=jwt.sign({userId:savedUser._id},process.env.JWTPASS)
-                    return res.status(200).json({token:token})
+                    return res.status(200).json({token:token,user:savedUser})
                 }
 
                 return res.status(200).json({message:"Invalid  password"})
@@ -71,6 +71,7 @@ router.post('/signin',async(req,res)=>{
 router.get('/',auth,async(req,res)=>{
     try {
         let allUsers=await User.find()
+        allUsers=allUsers.filter(x=>x["email"]!=req.user.email)
         res.status(200).json({message:allUsers})
     } catch (error) {
         console.log(error)
@@ -147,7 +148,7 @@ router.put('/resetpassword/:id/:token',async(req,res)=>{
         if(!tokenCheck) return res.status(200).json({err:"Invalid Token"})
 
         const {password,confirmpassword}=req.body
-
+ 
         if(password!==confirmpassword) {
         return res.status(200).json({message:"Password Doesn't match"})
         }else{

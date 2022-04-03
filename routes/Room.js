@@ -42,13 +42,12 @@ router.put('/:id/addmember',auth,async(req,res)=>{
 router.get('/me',auth,async(req,res)=>{
     try {
         let myroom=[]
-        let rooms=await Room.find()
+        let rooms=await Room.find().populate('member')
         rooms.map(y=>{
             y.member.map(x=>{
-                x===req.body.id?myroom.push(y):null
+                x._id.toString()===req.user._id.toString()?myroom.push(y):null
             })
         })
-    
         res.status(200).json(myroom)
     } catch (error) {
        console.log(error) 
