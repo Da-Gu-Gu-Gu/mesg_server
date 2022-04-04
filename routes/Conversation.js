@@ -32,6 +32,7 @@ router.post('/:id',auth,async(req,res)=>{
 //message 
 router.get('/:id',auth,async(req,res)=>{
     try {
+        console.log(req.user)
         if( !mongoose.Types.ObjectId.isValid(req.params.id) ){
             return res.status(200).json({err:"Invalid Room"})
         }
@@ -39,11 +40,11 @@ router.get('/:id',auth,async(req,res)=>{
         let roomCheck=await Room.findById(req.params.id)
         if(!roomCheck) return res.status(200).json({err:"Invalid Room"})
 
-        if (!roomCheck.member.includes(req.body.me)){
+        if (!roomCheck.member.includes(req.user._id.toString())){
             return res.status(200).json({err:"You are not member"})
         }
 
-        const mesg=await Conversation.find({"RoomID":req.params.id},)
+        const mesg=await Conversation.find({"RoomID":req.params.id}).populate('sender')
 
         res.status(200).json(mesg)
 
