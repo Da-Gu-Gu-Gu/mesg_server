@@ -8,10 +8,24 @@ const mongoose=require('mongoose')
 
 router.post('/',auth,async(req,res)=>{
     try {
-        await new Room(
-            req.body
-        ).save()
-        res.status(200).json({message:"Room Created"})
+        let all=await Room.find({isGroup:false})
+        console.log('aa')
+        // || y.member.toString().split(',')===req.body.member.reverse()
+        console.log(all)
+        let check=all.filter(y=>{
+        return  y.member.toString()===req.body.member.toString() || y.member.toString()===req.body.member.toString().split(',').reverse().toString()
+        }
+        )
+        console.log(check)
+        if(check.length>0){
+            res.status(200).json({message:"Room Already Exist.",room:check})
+        }else{
+           let newroom= await new Room(
+                req.body
+            ).save()
+            res.status(200).json({message:"Room Created",room:newroom})
+        }
+  
     } catch (error) {
         console.log(error)
     }
