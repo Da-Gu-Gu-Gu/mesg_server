@@ -9,9 +9,7 @@ const mongoose=require('mongoose')
 router.post('/',auth,async(req,res)=>{
     try {
         let all=await Room.find({isGroup:false})
-        console.log('aa')
-        // || y.member.toString().split(',')===req.body.member.reverse()
-        console.log(all)
+     
         let check=all.filter(y=>{
         return  y.member.toString()===req.body.member.toString() || y.member.toString()===req.body.member.toString().split(',').reverse().toString()
         }
@@ -30,7 +28,7 @@ router.post('/',auth,async(req,res)=>{
         console.log(error)
     }
 })
-
+ 
 
 router.put('/:id/addmember',auth,async(req,res)=>{
     try {

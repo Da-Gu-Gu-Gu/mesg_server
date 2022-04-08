@@ -42,9 +42,9 @@ router.get('/:id',auth,async(req,res)=>{
 
         if (!roomCheck.member.includes(req.user._id.toString())){
             return res.status(200).json({err:"You are not member"})
-        }
+         }
 
-        const mesg=await Conversation.find({"RoomID":req.params.id}).populate('sender')
+        const mesg=await Conversation.find({"RoomID":req.params.id}).populate('sender').populate('RoomID')
 
         res.status(200).json(mesg)
 
