@@ -1,14 +1,18 @@
 const express=require('express')
 const app=express()
+const cors=require('cors')
+app.use(cors({
+    origin: '*'
+}));    
 const dotenv=require('dotenv').config()
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const mongoose=require('mongoose')
-const cors=require('cors')
 
 
 
-app.use(cors())
+
+
 app.use(express.json())
 
 //router
@@ -27,6 +31,93 @@ mongoose.connect(process.env.MONGODB)
 .then(()=>console.log('good'))
 .catch((err)=>console.log(err.message))
 
+const io = new Server(httpServer, { 
+    cors: {
+        origin: process.env.CLIENT_URL,
+        methods: ["GET", "POST"],
+        transports: ['websocket', 'polling'],
+        credentials: true
+    },
+    allowEIO3: true
+})
 
-const io = new Server(httpServer, { /* options */ });
+let sockeUser=[]
+
+let rooms=[]
+
+const addUser=(userId,socketId)=>{
+   !sockeUser.some(user=>user.userId === userId) &&
+   sockeUser.push({userId,socketId})
+}
+
+
+const removeUser=(socketId)=>{
+    sockeUser=sockeUser.filter(x=>x.socketId!==socketId)
+}
+
+const addRoom=(roomId,socketId)=>{
+    !rooms.some(x=>x.roomId === roomId ) &&
+    rooms.push({roomId,socketId})
+}
+
+const removeRoom=(socketId)=>{
+    rooms=rooms.filter(x=>x.socketId!==socketId)
+}
+
+const getRoom=(roomId)=>{
+    return rooms.find(x=>x.roomId===roomId)
+}
+
+const getUser=(userId)=>{
+    console.log(userId)
+    console.log(sockeUser)
+    return sockeUser.find(user=>user.userId===userId)
+}
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+
+
+    // socket.on('create', function(roomId) {
+    //     socket.join(roomId);
+    //   });
+ 
+
+    socket.on("addUser",(userId)=>{
+        addUser(userId,socket.id)
+        io.emit("getUsers",sockeUser)
+    })
+
+    socket.on("addRoom",(roomId)=>{
+        addRoom(roomId,socket.id)
+        io.emit("getRooms",rooms)
+    })
+
+    socket.on("sendMessage",({roomid,sender,text})=>{
+        const room=getRoom(roomid)
+        console.log(room)
+        if(room){
+            io.emit(`getMessage${room.roomId}`,{
+                sender,
+                text,
+                roomid
+            })
+            console.log('work')
+        }
+    })
+  
+
+
+
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+        removeUser(socket.id)
+        removeRoom(socket.id)
+
+        io.emit("getRooms",rooms)
+      });
+
+
+  });
+
 httpServer.listen(5000,()=>console.log('Server is running on 5000'))
