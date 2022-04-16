@@ -95,6 +95,8 @@ io.on('connection', (socket) => {
 
     socket.on("sendMessage",({roomid,sender,text})=>{
         const room=getRoom(roomid)
+        console.log(roomid)
+        
         console.log(room)
         if(room){
             io.emit(`getMessage${room.roomId}`,{
@@ -103,6 +105,19 @@ io.on('connection', (socket) => {
                 roomid
             })
             console.log('work')
+        }
+        else{
+           let newroom= addRoom(roomid,socket.id)
+           console.log(rooms)
+           let nr=getRoom(roomid)
+           console.log(nr)
+           io.emit(`getMessage${nr.roomId}`,{
+            sender,
+            text,   
+            roomid
+        })
+        console.log(' work 2')
+
         }
     })
   
