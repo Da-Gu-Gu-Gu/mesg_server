@@ -33,8 +33,8 @@ mongoose.connect(process.env.MONGODB)
 
 const io = new Server(httpServer, { 
     cors: {
-        // origin: process.env.CLIENT_URL,
-        origin:'*',
+        origin: process.env.CLIENT_URL,
+        // origin:'*',
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
