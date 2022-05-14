@@ -1,4 +1,7 @@
 const express=require('express')
+
+const serverless = require("serverless-http");
+
 const app=express()
 const cors=require('cors')
 app.use(cors({
@@ -16,13 +19,13 @@ const mongoose=require('mongoose')
 app.use(express.json())
 
 //router
-const userRoute=require('./routes/User')
+const userRoute=require('../routes/User')
 app.use('/api/user/',userRoute)
 
-const conversationRoute=require('./routes/Conversation')
+const conversationRoute=require('../routes/Conversation')
 app.use('/api/conversation/',conversationRoute)
 
-const roomRoute=require('./routes/Room')
+const roomRoute=require('../routes/Room')
 app.use('/api/room/',roomRoute)
 
 const httpServer = createServer(app);
@@ -135,5 +138,8 @@ io.on('connection', (socket) => {
 
 
   });
+
+  module.exports = app;
+  module.exports.handler = serverless(app);
 
 httpServer.listen(5000,()=>console.log('Server is running on 5000'))
