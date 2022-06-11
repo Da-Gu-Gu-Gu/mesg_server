@@ -130,4 +130,6 @@ io.on("connection", (socket) => {
 module.exports = app;
 module.exports.handler = serverless(app);
 
-httpServer.listen(5000, () => console.log("Server is running on 5000"));
+httpServer.listen(process.env.PORT || 5000, () =>
+  console.log("Server is running on 5000")
+);
